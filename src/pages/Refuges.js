@@ -1,4 +1,6 @@
+// src/pages/Refuges.js
 import React, { useState, useEffect } from "react";
+import { fetchRefuges, addRefuge } from "../api";
 
 const Refuges = () => {
   const [refuges, setRefuges] = useState([]);
@@ -8,40 +10,36 @@ const Refuges = () => {
     telephone: "",
     adresse: "",
   });
-  const [editId, setEditId] = useState(null); // 🆕 refuge en cours d’édition
+  const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
 
-  // 🔄 Charger les refuges
+  // 🔄 Charger les refuges au démarrage
   useEffect(() => {
-    fetch("http://192.168.1.157:5000/api/refuges")
-      .then((r) => r.json())
-      .then(setRefuges)
-      .catch((err) => console.error("Erreur chargement refuges :", err));
+    loadRefuges();
   }, []);
 
-  // 🟢 Ajout d’un refuge
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    fetch("http://192.168.1.157:5000/api/refuges", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-      .then((r) => r.json())
-      .then(() => {
-        setFormData({ nom: "", responsable: "", telephone: "", adresse: "" });
-        refreshRefuges();
-      })
-      .catch((err) => console.error("Erreur ajout refuge :", err));
+  const loadRefuges = async () => {
+    try {
+      const data = await fetchRefuges();
+      setRefuges(data);
+    } catch (err) {
+      console.error("Erreur chargement refuges :", err);
+    }
   };
 
-  // 🔁 Rechargement
-  const refreshRefuges = () =>
-    fetch("http://192.168.1.157:5000/api/refuges")
-      .then((r) => r.json())
-      .then(setRefuges);
+  // 🟢 Ajouter un refuge
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await addRefuge(formData);
+      setFormData({ nom: "", responsable: "", telephone: "", adresse: "" });
+      loadRefuges();
+    } catch (err) {
+      console.error("Erreur ajout refuge :", err);
+    }
+  };
 
-  // ✏️ Modification
+  // ✏️ Commencer la modification
   const handleEdit = (refuge) => {
     setEditId(refuge.id);
     setEditData({ ...refuge });
@@ -51,26 +49,31 @@ const Refuges = () => {
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
 
-  const handleEditSubmit = (id) => {
-    fetch(`http://192.168.1.157:5000/api/refuges/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editData),
-    })
-      .then((r) => r.json())
-      .then(() => {
-        setEditId(null);
-        refreshRefuges();
-      })
-      .catch((err) => console.error("Erreur modification refuge :", err));
+  const handleEditSubmit = async (id) => {
+    try {
+      await fetch(`https://spa-transferts-backend.onrender.com/api/refuges/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editData),
+      });
+      setEditId(null);
+      loadRefuges();
+    } catch (err) {
+      console.error("Erreur modification refuge :", err);
+    }
   };
 
-  // ❌ Suppression
-  const handleDelete = (id) => {
+  // ❌ Supprimer
+  const handleDelete = async (id) => {
     if (window.confirm("Supprimer ce refuge ?")) {
-      fetch(`http://192.168.1.157:5000/api/refuges/${id}`, { method: "DELETE" })
-        .then(() => refreshRefuges())
-        .catch((err) => console.error("Erreur suppression refuge :", err));
+      try {
+        await fetch(`https://spa-transferts-backend.onrender.com/api/refuges/${id}`, {
+          method: "DELETE",
+        });
+        loadRefuges();
+      } catch (err) {
+        console.error("Erreur suppression refuge :", err);
+      }
     }
   };
 
@@ -93,9 +96,7 @@ const Refuges = () => {
         <input
           name="responsable"
           value={formData.responsable}
-          onChange={(e) =>
-            setFormData({ ...formData, responsable: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, responsable: e.target.value })}
           placeholder="Responsable"
           className="border p-2 rounded"
         />
@@ -132,77 +133,33 @@ const Refuges = () => {
               className="bg-white p-4 rounded-lg shadow flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center"
             >
               {editId === r.id ? (
-                // 🧩 Formulaire d’édition
+                // 🧩 Édition
                 <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-2">
-                  <input
-                    name="nom"
-                    value={editData.nom}
-                    onChange={handleEditChange}
-                    className="border p-2 rounded"
-                  />
-                  <input
-                    name="responsable"
-                    value={editData.responsable}
-                    onChange={handleEditChange}
-                    className="border p-2 rounded"
-                  />
-                  <input
-                    name="telephone"
-                    value={editData.telephone}
-                    onChange={handleEditChange}
-                    className="border p-2 rounded"
-                  />
-                  <input
-                    name="adresse"
-                    value={editData.adresse}
-                    onChange={handleEditChange}
-                    className="border p-2 rounded"
-                  />
+                  <input name="nom" value={editData.nom} onChange={handleEditChange} className="border p-2 rounded" />
+                  <input name="responsable" value={editData.responsable} onChange={handleEditChange} className="border p-2 rounded" />
+                  <input name="telephone" value={editData.telephone} onChange={handleEditChange} className="border p-2 rounded" />
+                  <input name="adresse" value={editData.adresse} onChange={handleEditChange} className="border p-2 rounded" />
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEditSubmit(r.id)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded"
-                    >
+                    <button onClick={() => handleEditSubmit(r.id)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded">
                       💾
                     </button>
-                    <button
-                      onClick={() => setEditId(null)}
-                      className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded"
-                    >
+                    <button onClick={() => setEditId(null)} className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded">
                       ❌
                     </button>
                   </div>
                 </div>
               ) : (
-                // 🏷️ Affichage normal
                 <>
                   <div>
                     <p className="text-lg font-semibold text-gray-800">{r.nom}</p>
-                    <p className="text-sm text-gray-600">
-                      Responsable :{" "}
-                      <span className="font-medium">{r.responsable}</span>
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      📞 {r.telephone || "—"}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      📍 {r.adresse || "—"}
-                    </p>
+                    <p className="text-sm text-gray-600">Responsable : <span className="font-medium">{r.responsable}</span></p>
+                    <p className="text-sm text-gray-600">📞 {r.telephone || "—"}</p>
+                    <p className="text-sm text-gray-600">📍 {r.adresse || "—"}</p>
                   </div>
 
                   <div className="flex gap-2 mt-2 sm:mt-0">
-                    <button
-                      onClick={() => handleEdit(r)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded"
-                    >
-                      🗑️
-                    </button>
+                    <button onClick={() => handleEdit(r)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded">✏️</button>
+                    <button onClick={() => handleDelete(r.id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded">🗑️</button>
                   </div>
                 </>
               )}
