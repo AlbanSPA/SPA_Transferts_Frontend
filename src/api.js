@@ -1,3 +1,4 @@
+// src/api.js
 const API_URL = "https://spa-transferts-backend.onrender.com";
 
 export async function fetchRefuges() {
@@ -5,17 +6,7 @@ export async function fetchRefuges() {
   return response.json();
 }
 
-export async function fetchChiens() {
-  const response = await fetch(`${API_URL}/api/chiens`);
-  return response.json();
-}
-
-export async function fetchTransferts() {
-  const response = await fetch(`${API_URL}/api/transferts`);
-  return response.json();
-}
-
-export async function ajouterRefuge(data) {
+export async function addRefuge(data) {
   const response = await fetch(`${API_URL}/api/refuges`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -24,7 +15,12 @@ export async function ajouterRefuge(data) {
   return response.json();
 }
 
-export async function ajouterChien(data) {
+export async function fetchChiens() {
+  const response = await fetch(`${API_URL}/api/chiens`);
+  return response.json();
+}
+
+export async function addChien(data) {
   const response = await fetch(`${API_URL}/api/chiens`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -33,7 +29,12 @@ export async function ajouterChien(data) {
   return response.json();
 }
 
-export async function ajouterTransfert(data) {
+export async function fetchTransferts() {
+  const response = await fetch(`${API_URL}/api/transferts`);
+  return response.json();
+}
+
+export async function addTransfert(data) {
   const response = await fetch(`${API_URL}/api/transferts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
