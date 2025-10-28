@@ -41,6 +41,17 @@ const Transferts = () => {
     }
   };
 
+  // 🧠 Fonctions utilitaires pour trouver les noms
+  const getChienNom = (id) => {
+    const chien = chiens.find((c) => c.id === id);
+    return chien ? chien.nom : `Chien ID ${id}`;
+  };
+
+  const getRefugeNom = (id) => {
+    const refuge = refuges.find((r) => r.id === id);
+    return refuge ? refuge.nom : `Refuge ${id}`;
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-orange-700">Transferts 🚚</h1>
@@ -53,7 +64,7 @@ const Transferts = () => {
         <select
           name="chien_id"
           value={formData.chien_id}
-          onChange={(e) => setFormData({ ...formData, chien_id: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, chien_id: parseInt(e.target.value) })}
           className="border p-2 rounded"
         >
           <option value="">Choisir un chien</option>
@@ -68,7 +79,7 @@ const Transferts = () => {
           name="refuge_depart_id"
           value={formData.refuge_depart_id}
           onChange={(e) =>
-            setFormData({ ...formData, refuge_depart_id: e.target.value })
+            setFormData({ ...formData, refuge_depart_id: parseInt(e.target.value) })
           }
           className="border p-2 rounded"
         >
@@ -84,7 +95,7 @@ const Transferts = () => {
           name="refuge_arrivee_id"
           value={formData.refuge_arrivee_id}
           onChange={(e) =>
-            setFormData({ ...formData, refuge_arrivee_id: e.target.value })
+            setFormData({ ...formData, refuge_arrivee_id: parseInt(e.target.value) })
           }
           className="border p-2 rounded"
         >
@@ -128,12 +139,14 @@ const Transferts = () => {
             >
               <div>
                 <p className="font-semibold text-gray-800">
-                  🐶 Chien ID : {t.chien_id}
+                  🐶 {getChienNom(t.chien_id)}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Départ : {t.refuge_depart_id} → Arrivée : {t.refuge_arrivee_id}
+                  🏠 {getRefugeNom(t.refuge_depart_id)} → {getRefugeNom(t.refuge_arrivee_id)}
                 </p>
-                <p className="text-sm text-gray-600">📅 Statut : {t.statut}</p>
+                <p className="text-sm text-gray-600">
+                  📅 Statut : {t.statut}
+                </p>
               </div>
             </div>
           ))
