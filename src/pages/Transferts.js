@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { fetchTransferts, addTransfert, fetchChiens, fetchRefuges } from "../api";
+import {
+  fetchTransferts,
+  addTransfert,
+  fetchChiens,
+  fetchRefuges,
+  updateTransfert,
+} from "../api";
 
 const Transferts = () => {
   const [transferts, setTransferts] = useState([]);
   const [chiens, setChiens] = useState([]);
   const [refuges, setRefuges] = useState([]);
+  const [savingId, setSavingId] = useState(null);
+
   const [formData, setFormData] = useState({
     chien_id: "",
     refuge_depart_id: "",
@@ -22,6 +30,16 @@ const Transferts = () => {
       })
       .catch((err) => console.error("Erreur chargement transferts :", err));
   }, []);
+
+  // Utils: retrouver les noms
+  const getChienNom = (id) => {
+    const c = chiens.find((x) => x.id === id);
+    return c ? c.nom : `Chien ID ${id}`;
+  };
+  const getRefugeNom = (id) => {
+    const r = refuges.find((x) => x.id === id);
+    return r ? r.nom : `Refuge ${id}`;
+  };
 
   // Ajouter un transfert
   const handleSubmit = async (e) => {
@@ -41,15 +59,25 @@ const Transferts = () => {
     }
   };
 
-  // 🧠 Fonctions utilitaires pour trouver les noms
-  const getChienNom = (id) => {
-    const chien = chiens.find((c) => c.id === id);
-    return chien ? chien.nom : `Chien ID ${id}`;
-  };
+  // Modifier le statut d’un transfert (inline)
+  const handleStatusChange = async (id, newStatut) => {
+    try {
+      setSavingId(id);
+      // Optimistic UI : on met à jour localement avant le serveur
+      setTransferts((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, statut: newStatut } : t))
+      );
 
-  const getRefugeNom = (id) => {
-    const refuge = refuges.find((r) => r.id === id);
-    return refuge ? refuge.nom : `Refuge ${id}`;
+      await updateTransfert(id, { statut: newStatut });
+
+      // Par sécurité, on resynchronise avec le backend
+      const refreshed = await fetchTransferts();
+      setTransferts(refreshed);
+    } catch (err) {
+      console.error("Erreur mise à jour statut :", err);
+    } finally {
+      setSavingId(null);
+    }
   };
 
   return (
@@ -64,7 +92,9 @@ const Transferts = () => {
         <select
           name="chien_id"
           value={formData.chien_id}
-          onChange={(e) => setFormData({ ...formData, chien_id: parseInt(e.target.value) })}
+          onChange={(e) =>
+            setFormData({ ...formData, chien_id: parseInt(e.target.value) })
+          }
           className="border p-2 rounded"
         >
           <option value="">Choisir un chien</option>
@@ -79,7 +109,10 @@ const Transferts = () => {
           name="refuge_depart_id"
           value={formData.refuge_depart_id}
           onChange={(e) =>
-            setFormData({ ...formData, refuge_depart_id: parseInt(e.target.value) })
+            setFormData({
+              ...formData,
+              refuge_depart_id: parseInt(e.target.value),
+            })
           }
           className="border p-2 rounded"
         >
@@ -95,7 +128,10 @@ const Transferts = () => {
           name="refuge_arrivee_id"
           value={formData.refuge_arrivee_id}
           onChange={(e) =>
-            setFormData({ ...formData, refuge_arrivee_id: parseInt(e.target.value) })
+            setFormData({
+              ...formData,
+              refuge_arrivee_id: parseInt(e.target.value),
+            })
           }
           className="border p-2 rounded"
         >
@@ -135,7 +171,7 @@ const Transferts = () => {
           transferts.map((t) => (
             <div
               key={t.id}
-              className="bg-white p-4 rounded-lg shadow flex flex-col sm:flex-row sm:justify-between sm:items-center"
+              className="bg-white p-4 rounded-lg shadow flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center"
             >
               <div>
                 <p className="font-semibold text-gray-800">
@@ -144,9 +180,24 @@ const Transferts = () => {
                 <p className="text-sm text-gray-600">
                   🏠 {getRefugeNom(t.refuge_depart_id)} → {getRefugeNom(t.refuge_arrivee_id)}
                 </p>
-                <p className="text-sm text-gray-600">
-                  📅 Statut : {t.statut}
-                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-gray-600">Statut :</label>
+                <select
+                  value={t.statut}
+                  onChange={(e) => handleStatusChange(t.id, e.target.value)}
+                  disabled={savingId === t.id}
+                  className="border p-2 rounded"
+                >
+                  <option>En attente</option>
+                  <option>En cours</option>
+                  <option>Terminé</option>
+                  <option>Adopté</option>
+                </select>
+                {savingId === t.id && (
+                  <span className="text-xs text-gray-500">Enregistrement…</span>
+                )}
               </div>
             </div>
           ))

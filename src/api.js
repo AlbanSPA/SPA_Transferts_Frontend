@@ -42,3 +42,11 @@ export async function addTransfert(data) {
   });
   return response.json();
 }
+export async function updateTransfert(id, data) {
+  const response = await fetch(`${API_URL}/api/transferts/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
