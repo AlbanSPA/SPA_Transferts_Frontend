@@ -1,3 +1,4 @@
+// src/pages/Chiens12.js
 import React, { useEffect, useState } from "react";
 import {
   fetchChiens12,
@@ -7,22 +8,28 @@ import {
   fetchRefuges,
 } from "../api";
 
-function refugeName(id) {
-  if (!id) return "—";
-  const r = refuges.find(r => r.id === id);
-  return r ? r.nom : `Refuge #${id}`;
-}
-
-
 export default function Chiens12() {
   const [chiens, setChiens] = useState([]);
-  const [refuges, setRefuges] = useState([]);
+  const [refuges, setRefuges] = useState([]); // <- IMPORTANT : défini
 
-  const [form, setForm] = useState({ nom: "", age: "", race: "", refuge_id: "" });
+  const [form, setForm] = useState({
+    nom: "",
+    age: "",
+    race: "",
+    refuge_id: "",
+  });
+
   const [editId, setEditId] = useState(null);
-  const [editForm, setEditForm] = useState({ nom: "", age: "", race: "", refuge_id: "" });
+  const [editForm, setEditForm] = useState({
+    nom: "",
+    age: "",
+    race: "",
+    refuge_id: "",
+  });
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+  }, []);
 
   async function refresh() {
     try {
@@ -77,7 +84,7 @@ export default function Chiens12() {
     }
   }
 
-  async function remove(id) {
+  async function removeItem(id) {
     if (!window.confirm("Supprimer ce chien 12 mois ?")) return;
     try {
       await deleteChien12(id);
@@ -123,7 +130,9 @@ export default function Chiens12() {
         >
           <option value="">Refuge (optionnel)</option>
           {refuges.map((r) => (
-            <option key={r.id} value={r.id}>{r.nom}</option>
+            <option key={r.id} value={r.id}>
+              {r.nom}
+            </option>
           ))}
         </select>
         <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded shadow">
@@ -134,55 +143,93 @@ export default function Chiens12() {
       {/* Liste */}
       <div className="grid gap-4">
         {chiens.length === 0 ? (
-          <p className="text-gray-500 text-center">Aucun chien 12 mois enregistré.</p>
+          <p className="text-gray-500 text-center">
+            Aucun chien 12 mois enregistré.
+          </p>
         ) : (
           chiens.map((c) => (
-            <div key={c.id} className="bg-white p-4 rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div
+              key={c.id}
+              className="bg-white p-4 rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            >
               {editId === c.id ? (
                 <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-2">
                   <input
                     className="border p-2 rounded"
                     value={editForm.nom}
-                    onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, nom: e.target.value })
+                    }
                   />
                   <input
                     className="border p-2 rounded"
                     type="number"
                     value={editForm.age}
-                    onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, age: e.target.value })
+                    }
                   />
                   <input
                     className="border p-2 rounded"
                     value={editForm.race}
-                    onChange={(e) => setEditForm({ ...editForm, race: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, race: e.target.value })
+                    }
                   />
                   <select
                     className="border p-2 rounded"
                     value={editForm.refuge_id ?? ""}
-                    onChange={(e) => setEditForm({ ...editForm, refuge_id: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, refuge_id: e.target.value })
+                    }
                   >
                     <option value="">Refuge (optionnel)</option>
                     {refuges.map((r) => (
-                      <option key={r.id} value={r.id}>{r.nom}</option>
+                      <option key={r.id} value={r.id}>
+                        {r.nom}
+                      </option>
                     ))}
                   </select>
 
                   <div className="flex gap-2">
-                    <button onClick={() => saveEdit(c.id)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded">💾</button>
-                    <button onClick={() => setEditId(null)} className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded">❌</button>
+                    <button
+                      onClick={() => saveEdit(c.id)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded"
+                    >
+                      💾
+                    </button>
+                    <button
+                      onClick={() => setEditId(null)}
+                      className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-2 rounded"
+                    >
+                      ❌
+                    </button>
                   </div>
                 </div>
               ) : (
                 <>
                   <div>
                     <p className="text-lg font-semibold text-gray-800">{c.nom}</p>
-                    <p className="text-sm text-gray-600">Âge : {c.age ?? "—"} — Race : {c.race ?? "—"}</p>
-                    <p className="text-sm text-gray-600">Refuge : {refugeName(c.refuge_id)}</p>
-
+                    <p className="text-sm text-gray-600">
+                      Âge : {c.age ?? "—"} — Race : {c.race ?? "—"}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Refuge : {c.refuge_id ?? "—"}
+                    </p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => startEdit(c)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded">✏️</button>
-                    <button onClick={() => remove(c.id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded">🗑️</button>
+                    <button
+                      onClick={() => startEdit(c)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => removeItem(c.id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </>
               )}
