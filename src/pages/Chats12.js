@@ -1,69 +1,70 @@
-// frontend/src/pages/Chiens.js
+// frontend/src/pages/Chats12.js
 import React, { useEffect, useState } from "react";
 import {
-  fetchChiens,
-  addChien,
+  fetchChats12,
+  addChat12,
+  updateChat12,
+  deleteChat12,
   fetchRefuges,
-  updateChien,   // doit exister dans src/api.js
-  deleteChien,   // doit exister dans src/api.js
 } from "../api";
 
-export default function Chiens() {
-  const [chiens, setChiens] = useState([]);
+// ✅ Composant exporté directement en "export default function"
+export default function Chats12() {
+  const [chats, setChats] = useState([]);
   const [refuges, setRefuges] = useState([]);
 
   const [form, setForm] = useState({
     nom: "",
-    race: "",
     age: "",
+    race: "",
     refuge_id: "",
   });
 
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({
     nom: "",
-    race: "",
     age: "",
+    race: "",
     refuge_id: "",
   });
-
-  // --- Utils ---
-  function refugeNameById(id) {
-    const r = refuges.find((x) => x.id === id);
-    return r ? r.nom : id ?? "—";
-  }
-
-  async function refresh() {
-    const [list, refs] = await Promise.all([fetchChiens(), fetchRefuges()]);
-    setChiens(list || []);
-    setRefuges(refs || []);
-  }
 
   useEffect(() => {
     refresh();
   }, []);
 
-  // --- Ajout ---
+  async function refresh() {
+    try {
+      const [list, refs] = await Promise.all([fetchChats12(), fetchRefuges()]);
+      setChats(Array.isArray(list) ? list : []);
+      setRefuges(Array.isArray(refs) ? refs : []);
+    } catch (e) {
+      console.error("Erreur chargement Chats12:", e);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     const payload = {
       nom: form.nom.trim(),
-      race: form.race.trim(),
       age: form.age ? Number(form.age) : null,
+      race: form.race.trim(),
       refuge_id: form.refuge_id ? Number(form.refuge_id) : null,
     };
-    await addChien(payload);
-    setForm({ nom: "", race: "", age: "", refuge_id: "" });
-    await refresh();
+    try {
+      await addChat12(payload);
+      setForm({ nom: "", age: "", race: "", refuge_id: "" });
+      await refresh();
+    } catch (e) {
+      console.error("Erreur ajout Chat12:", e);
+    }
   }
 
-  // --- Edition ---
   function startEdit(c) {
     setEditId(c.id);
     setEditForm({
       nom: c.nom || "",
-      race: c.race || "",
       age: c.age ?? "",
+      race: c.race || "",
       refuge_id: c.refuge_id ?? "",
     });
   }
@@ -71,25 +72,32 @@ export default function Chiens() {
   async function saveEdit(id) {
     const payload = {
       nom: editForm.nom.trim(),
-      race: editForm.race.trim(),
       age: editForm.age ? Number(editForm.age) : null,
+      race: editForm.race.trim(),
       refuge_id: editForm.refuge_id ? Number(editForm.refuge_id) : null,
     };
-    await updateChien(id, payload);
-    setEditId(null);
-    await refresh();
+    try {
+      await updateChat12(id, payload);
+      setEditId(null);
+      await refresh();
+    } catch (e) {
+      console.error("Erreur maj Chat12:", e);
+    }
   }
 
-  // --- Suppression ---
   async function remove(id) {
-    if (!window.confirm("Supprimer ce chien ?")) return;
-    await deleteChien(id);
-    await refresh();
+    if (!window.confirm("Supprimer ce chat 12 mois ?")) return;
+    try {
+      await deleteChat12(id);
+      await refresh();
+    } catch (e) {
+      console.error("Erreur suppression Chat12:", e);
+    }
   }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-orange-700">Chiens 🐶</h1>
+      <h1 className="text-3xl font-bold mb-6 text-orange-700">Chats 12 mois 🐱</h1>
 
       {/* Formulaire d’ajout */}
       <form
@@ -105,79 +113,68 @@ export default function Chiens() {
         />
         <input
           className="border p-2 rounded"
-          placeholder="Race"
-          value={form.race}
-          onChange={(e) => setForm({ ...form, race: e.target.value })}
-        />
-        <input
-          className="border p-2 rounded"
           placeholder="Âge"
           type="number"
           value={form.age}
           onChange={(e) => setForm({ ...form, age: e.target.value })}
         />
-
-        {/* ⬇️ Menu déroulant des refuges au lieu de l’ID libre */}
+        <input
+          className="border p-2 rounded"
+          placeholder="Race"
+          value={form.race}
+          onChange={(e) => setForm({ ...form, race: e.target.value })}
+        />
         <select
           className="border p-2 rounded"
           value={form.refuge_id}
           onChange={(e) => setForm({ ...form, refuge_id: e.target.value })}
         >
-          <option value="">Choisir un refuge…</option>
+          <option value="">Refuge (optionnel)</option>
           {refuges.map((r) => (
             <option key={r.id} value={r.id}>
               {r.nom}
             </option>
           ))}
         </select>
-
         <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded shadow">
           Ajouter
         </button>
       </form>
 
-      {/* Liste des chiens */}
+      {/* Liste */}
       <div className="grid gap-4">
-        {chiens.length === 0 ? (
-          <p className="text-gray-500 text-center">Aucun chien enregistré.</p>
+        {chats.length === 0 ? (
+          <p className="text-gray-500 text-center">Aucun chat 12 mois enregistré.</p>
         ) : (
-          chiens.map((c) => (
+          chats.map((c) => (
             <div
               key={c.id}
               className="bg-white p-4 rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
             >
               {editId === c.id ? (
-                <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-2">
+                <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-2">
                   <input
                     className="border p-2 rounded"
                     value={editForm.nom}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, nom: e.target.value })
-                    }
-                  />
-                  <input
-                    className="border p-2 rounded"
-                    value={editForm.race}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, race: e.target.value })
-                    }
+                    onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
                   />
                   <input
                     className="border p-2 rounded"
                     type="number"
                     value={editForm.age}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, age: e.target.value })
-                    }
+                    onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                  />
+                  <input
+                    className="border p-2 rounded"
+                    value={editForm.race}
+                    onChange={(e) => setEditForm({ ...editForm, race: e.target.value })}
                   />
                   <select
                     className="border p-2 rounded"
                     value={editForm.refuge_id ?? ""}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, refuge_id: e.target.value })
-                    }
+                    onChange={(e) => setEditForm({ ...editForm, refuge_id: e.target.value })}
                   >
-                    <option value="">Choisir un refuge…</option>
+                    <option value="">Refuge (optionnel)</option>
                     {refuges.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.nom}
@@ -203,20 +200,14 @@ export default function Chiens() {
               ) : (
                 <>
                   <div>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {c.nom}
+                    <p className="text-lg font-semibold text-gray-800">{c.nom}</p>
+                    <p className="text-sm text-gray-600">
+                      Âge : {c.age ?? "—"} — Race : {c.race ?? "—"}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Race : {c.race || "—"}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Âge : {c.age ?? "—"}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Refuge : {refugeNameById(c.refuge_id)}
+                      Refuge ID : {c.refuge_id ?? "—"}
                     </p>
                   </div>
-
                   <div className="flex gap-2">
                     <button
                       onClick={() => startEdit(c)}
