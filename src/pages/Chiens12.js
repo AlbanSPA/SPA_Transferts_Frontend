@@ -7,6 +7,13 @@ import {
   fetchRefuges,
 } from "../api";
 
+function refugeName(id) {
+  if (!id) return "—";
+  const r = refuges.find(r => r.id === id);
+  return r ? r.nom : `Refuge #${id}`;
+}
+
+
 export default function Chiens12() {
   const [chiens, setChiens] = useState([]);
   const [refuges, setRefuges] = useState([]);
@@ -170,7 +177,8 @@ export default function Chiens12() {
                   <div>
                     <p className="text-lg font-semibold text-gray-800">{c.nom}</p>
                     <p className="text-sm text-gray-600">Âge : {c.age ?? "—"} — Race : {c.race ?? "—"}</p>
-                    <p className="text-sm text-gray-600">Refuge ID : {c.refuge_id ?? "—"}</p>
+                    <p className="text-sm text-gray-600">Refuge : {refugeName(c.refuge_id)}</p>
+
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => startEdit(c)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded">✏️</button>

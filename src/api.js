@@ -68,6 +68,13 @@ export async function updateTransfert(id, data) {
   });
   return r.json();
 }
+// --- SUPPRIMER UN TRANSFERT ---
+export async function deleteTransfert(id) {
+  const r = await fetch(`${API_URL}/api/transferts/${id}`, { method: "DELETE" });
+  if (!r.ok) throw new Error(`deleteTransfert failed: ${r.status}`);
+  return r.json();
+}
+
 
 // --- ANIMAUX (chiens + chiens12 + chats12) ---
 export async function fetchAnimaux() {

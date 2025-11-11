@@ -42,6 +42,13 @@ export default function Chats12() {
     }
   }
 
+  function refugeName(id) {
+  if (!id) return "—";
+  const r = refuges.find(r => r.id === id);
+  return r ? r.nom : `Refuge #${id}`;
+}
+
+
   async function handleSubmit(e) {
     e.preventDefault();
     const payload = {
@@ -205,8 +212,8 @@ export default function Chats12() {
                       Âge : {c.age ?? "—"} — Race : {c.race ?? "—"}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Refuge ID : {c.refuge_id ?? "—"}
-                    </p>
+                      Refuge : {refugeName(c.refuge_id)}</p>
+                    
                   </div>
                   <div className="flex gap-2">
                     <button
