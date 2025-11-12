@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   fetchRefuges,
   fetchTransferts,
   addTransfert,
   updateTransfert,
-  deleteTransfert,   // <-- IMPORTANT
-  fetchAnimaux,      // animal list (chien | chien12 | chat12)
+  deleteTransfert,
+  fetchAnimaux, // liste unifiée { id, nom, type: 'chien' | 'chien12' | 'chat12' }
 } from "../api";
 
 export default function Transferts() {
@@ -48,13 +48,10 @@ export default function Transferts() {
     }
   }
 
-  // helpers
+  // ---------- Helpers ----------
   function labelAnimal(a) {
-    // a = { id, nom, type }
     const prefix =
-      a.type === "chien" ? "Chien"
-      : a.type === "chien12" ? "Chien 12 mois"
-      : "Chat 12 mois";
+      a.type === "chien" ? "Chien" : a.type === "chien12" ? "Chien 12 mois" : "Chat 12 mois";
     return `${a.nom} (${prefix})`;
   }
 
@@ -72,7 +69,38 @@ export default function Transferts() {
     }
   }
 
-  // Création
+  // Maps id -> nom par type d’animal, construites depuis /api/animaux
+  const animauxMaps = useMemo(() => {
+    const chien = new Map();
+    const chien12 = new Map();
+    const chat12 = new Map();
+    for (const a of animaux) {
+      if (a.type === "chien") chien.set(a.id, a.nom);
+      else if (a.type === "chien12") chien12.set(a.id, a.nom);
+      else if (a.type === "chat12") chat12.set(a.id, a.nom);
+    }
+    return { chien, chien12, chat12 };
+  }, [animaux]);
+
+  function libelleAnimalPourTransfert(t) {
+    // Compat : certains transferts anciens peuvent n’avoir que chien_id
+    const type = t.animal_type || (t.chien_id ? "chien" : null);
+    const id = t.animal_id ?? t.chien_id ?? null;
+
+    if (!type || !id) return `ID ${t.id}`;
+
+    const prefix =
+      type === "chien" ? "Chien" : type === "chien12" ? "Chien 12 mois" : "Chat 12 mois";
+
+    let nom;
+    if (type === "chien") nom = animauxMaps.chien.get(id);
+    else if (type === "chien12") nom = animauxMaps.chien12.get(id);
+    else if (type === "chat12") nom = animauxMaps.chat12.get(id);
+
+    return `${prefix} ${nom || `ID ${id}`}`;
+  }
+
+  // ---------- Création ----------
   async function handleCreate(e) {
     e.preventDefault();
     if (!form.animalKey || !form.refuge_depart_id || !form.refuge_arrivee_id) return;
@@ -99,7 +127,7 @@ export default function Transferts() {
     }
   }
 
-  // Édition
+  // ---------- Édition ----------
   function startEdit(t) {
     setEditingId(t.id);
     setEditForm({
@@ -111,12 +139,8 @@ export default function Transferts() {
 
   async function saveEdit(id) {
     const payload = {
-      refuge_depart_id: editForm.refuge_depart_id
-        ? Number(editForm.refuge_depart_id)
-        : null,
-      refuge_arrivee_id: editForm.refuge_arrivee_id
-        ? Number(editForm.refuge_arrivee_id)
-        : null,
+      refuge_depart_id: editForm.refuge_depart_id ? Number(editForm.refuge_depart_id) : null,
+      refuge_arrivee_id: editForm.refuge_arrivee_id ? Number(editForm.refuge_arrivee_id) : null,
       statut: editForm.statut,
     };
     try {
@@ -128,7 +152,7 @@ export default function Transferts() {
     }
   }
 
-  // Suppression
+  // ---------- Suppression ----------
   async function remove(id) {
     if (!window.confirm("Supprimer ce transfert ?")) return;
     try {
@@ -139,7 +163,7 @@ export default function Transferts() {
     }
   }
 
-  // Rendu
+  // ---------- Rendu ----------
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
@@ -178,7 +202,9 @@ export default function Transferts() {
         >
           <option value="">Refuge de départ</option>
           {refuges.map((r) => (
-            <option key={r.id} value={r.id}>{r.nom}</option>
+            <option key={r.id} value={r.id}>
+              {r.nom}
+            </option>
           ))}
         </select>
 
@@ -189,7 +215,9 @@ export default function Transferts() {
         >
           <option value="">Refuge d’arrivée</option>
           {refuges.map((r) => (
-            <option key={r.id} value={r.id}>{r.nom}</option>
+            <option key={r.id} value={r.id}>
+              {r.nom}
+            </option>
           ))}
         </select>
 
@@ -217,13 +245,7 @@ export default function Transferts() {
           transferts.map((t) => {
             const rDepart = refuges.find((r) => r.id === t.refuge_depart_id);
             const rArrivee = refuges.find((r) => r.id === t.refuge_arrivee_id);
-
-            // Libellé animal pour l’entête (si on a l’info côté API unifiée)
-            // On n’a pas le nom directement en /transferts, donc on affiche “ID X”
-            const header =
-              t.animal_type && t.animal_id
-                ? `${t.animal_type === "chien" ? "Chien" : t.animal_type === "chien12" ? "Chien 12 mois" : "Chat 12 mois"} ID ${t.animal_id}`
-                : `ID ${t.id}`;
+            const header = libelleAnimalPourTransfert(t);
 
             return (
               <div key={t.id} className="bg-white p-4 rounded-lg shadow">
@@ -240,7 +262,9 @@ export default function Transferts() {
                       >
                         <option value="">—</option>
                         {refuges.map((r) => (
-                          <option key={r.id} value={r.id}>{r.nom}</option>
+                          <option key={r.id} value={r.id}>
+                            {r.nom}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -256,7 +280,9 @@ export default function Transferts() {
                       >
                         <option value="">—</option>
                         {refuges.map((r) => (
-                          <option key={r.id} value={r.id}>{r.nom}</option>
+                          <option key={r.id} value={r.id}>
+                            {r.nom}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -266,9 +292,7 @@ export default function Transferts() {
                       <select
                         className="border p-2 rounded w-full"
                         value={editForm.statut}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, statut: e.target.value })
-                        }
+                        onChange={(e) => setEditForm({ ...editForm, statut: e.target.value })}
                       >
                         <option>En attente</option>
                         <option>Confirmé</option>
